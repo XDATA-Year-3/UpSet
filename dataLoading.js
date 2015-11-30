@@ -121,11 +121,33 @@ var changeDataset = function () {
     clearSelections();
 }
 
+// CRL - new dispatch to either call the original CSV input subsystem or process a URL returning
+// JSON descriptions of the data.  
+
 function loadDataSet(index) {
-    processDataSet(dataSetDescriptions[index]);
+    // check if dataset is original file type, or JSON online type
+    if (dataSetDescriptions[index]['datasource'] == 'remote') {
+        processJsonDataSet(dataSetDescriptions[index]) 
+    } else {
+        processDataSet(dataSetDescriptions[index]);
+    }
 }
 
 function processDataSet(dataSetDescription) {
+    //processJsonDataSet(dataSetDescription)
+    processTextDataSet(dataSetDescription)
+}
+
+
+function processJsonDataSet(dataSetDescription) {
+    console.log('processing JSON data source')
+    d3.json(dataSetDescription.file, function (data) {
+        parseJsonDataSet(data, dataSetDescription);
+        run();
+    });
+}
+
+function processTextDataSet(dataSetDescription) {
     d3.text(dataSetDescription.file, 'text/csv', function (data) {
         parseDataSet(data, dataSetDescription);
         run();
@@ -283,6 +305,9 @@ function parseDataSet(data, dataSetDescription) {
     // load set assignments
     var processedSetsCount = 0;
     for (var i = 0; i < dataSetDescription.sets.length; ++i) {
+        // setDefn has a start and end index for an array of column values from the dataset, which are sets
+        // this is a loop, because there might be several "groups" of set columns in the dataset.  Each group is processed
+        // separately in a loop iteration.
         var setDefinitionBlock = dataSetDescription.sets[i];
 
         if (setDefinitionBlock.format === 'binary') {
@@ -292,6 +317,10 @@ function parseDataSet(data, dataSetDescription) {
             for (var setCount = 0; setCount < setDefinitionBlockLength; ++setCount) {
                 rawSets.push(new Array());
             }
+
+            // this is a mapping function which runs through all rows of the dataset and returns the binary values
+            // of the columns in this set definition block. For example start=1, end=6 will return an array for each
+            // line of the file.  Each entry will be an array of 6 entries, for the 6 sets.
 
             var rows = file.map(function (row, rowIndex) {
                 return row.map(function (value, columnIndex) {
@@ -309,6 +338,224 @@ function parseDataSet(data, dataSetDescription) {
                     return null;
                 });
             });
+
+            // now "rows" contains the set description from above
+
+            // iterate over columns defined by this set definition block
+            for (var r = 0; r < rows.length; r++) {
+                // increment number of items in data set
+                // only increment depth when we are processing the first set definition block (we will already iterate overall rows)
+                if (i === 0) {
+                    allItems.push(depth++);
+                }
+
+                // this loop adds the set values across the different block definitions into the "rawSets" array
+                for (var s = 0; s < setDefinitionBlockLength; ++s) {
+                    rawSets[processedSetsCount + s].push(rows[r][setDefinitionBlock.start + s]);
+
+                    if (r === 1) {
+                        setNames.push(header[setDefinitionBlock.start + s]);
+                    }
+                }
+            }
+
+            processedSetsCount += setDefinitionBlockLength;
+        }
+        else {
+            console.error('Set definition format "' + setDefinitionBlock.format + '" not supported');
+        }
+    }
+
+    // initialize sets and set IDs
+    // the Set() type is defined in dataStructure.js and includes the set value data and  associated metadata. the
+    // variable "setList" and "attributes" are filled by the loading process. 
+
+    var setPrefix = "S_";
+    //var setID = 1;
+    for (var i = 0; i < rawSets.length; i++) {
+        var combinedSets = Array.apply(null, new Array(rawSets.length)).map(Number.prototype.valueOf, 0);
+        combinedSets[i] = 1;
+        var set = new Set(setPrefix + i, setNames[i], combinedSets, rawSets[i]);
+        setIdToSet[setPrefix + i] = set;
+        sets.push(set);
+        if (i < nrDefaultSets) {
+            set.isSelected = true;
+            usedSets.push(set);
+        }
+        // setID = setID << 1;
+    }
+
+    // initialize attribute data structure. 
+    attributes.length = 0;
+    for (var i = 0; i < dataSetDescription.meta.length; ++i) {
+        var metaDefinition = dataSetDescription.meta[i];
+
+        attributes.push({
+            name: metaDefinition.name || header[metaDefinition.index],
+            type: metaDefinition.type,
+            values: [],
+            sort: 1
+        });
+    }
+
+    // add implicit attributes
+    var setCountAttribute = {
+        name: 'Set Count',
+        type: 'integer',
+        values: [],
+        sort: 1,
+        min: 0
+    };
+
+
+
+    // rawSets contains an Array of elements for each "set" defined in this data.  For example, for 
+    // Simpsons, 6 sets ('Blue Hair','school', etc...).  For each set, an array of all elements is created
+    // and a 1 is written to the array if the element is in this particular set.
+
+    for (var d = 0; d < depth; ++d) {
+        var setCount = 0;
+        for (var s = 0; s < rawSets.length; s++) {
+            setCount += rawSets[s][d];
+        }
+        setCountAttribute.values[d] = setCount;
+    }
+    // For each element, calculate how many sets the element belongs to.  Then add an array of these
+    // totals to the attributes of the dataset, calling it setCountAttribute.
+    attributes.push(setCountAttribute);
+
+    var setsAttribute = {
+        name: 'Sets',
+        type: 'sets',
+        values: [],
+        sort: 1
+    };
+
+
+    // fill the setsAttribute with an aggregated list, where all set membership for each element is combined into
+    // a list.  A single Array is in setsAttribute.value.  This array has an entry for each data element.  The value is a
+    // list of which sets the element is contained in.  Sets are listed by id (e.g. "S_0", "S_1", etc.)
+
+    for (var d = 0; d < depth; ++d) {
+        var setList = [];
+        for (var s = 0; s < rawSets.length; s++) {
+            if (rawSets[s][d] === 1) {
+                //setList.push(Math.floor(Math.pow(2, s)));
+                setList.push(sets[s].id)
+            }
+        }
+        setsAttribute.values[d] = setList;
+    }
+    attributes.push(setsAttribute);
+
+    // load meta data
+    // This fills in the names of all the sets in the attributes structure.  Before this loop, the attributes[0] had an
+    // empty Name array.  Afterwards, it was filled with the proper named values for each set. 
+
+    for (var i = 0; i < dataSetDescription.meta.length; ++i) {
+        var metaDefinition = dataSetDescription.meta[i];
+
+        attributes[i].values = file.map(function (row, rowIndex) {
+            var value = row[metaDefinition.index];
+            switch (metaDefinition.type) {
+                case 'integer':
+                    var intValue = parseInt(value, 10);
+                    if (isNaN(intValue)) {
+                        console.error('Unable to convert "' + value + '" to integer.');
+                        return NaN;
+                    }
+                    return intValue;
+                case 'float':
+                    var floatValue = parseFloat(value, 10);
+                    if (isNaN(floatValue)) {
+                        console.error('Unable to convert "' + value + '" to float.');
+                        return NaN;
+                    }
+                    return floatValue;
+                case 'id':
+                // fall-through
+                case 'string':
+                // fall-through
+                default:
+                    return value;
+            }
+
+        });
+    }
+
+    var max
+
+    // add meta data summary statistics
+    for (var i = 0; i < attributes.length; ++i) {
+
+        if (attributes[i].type === "float" || attributes[i].type === "integer") {
+            // explictly defined attributes might have user-defined ranges
+            if (i < dataSetDescription.meta.length) {
+                attributes[i].min = dataSetDescription.meta[i].min || Math.min.apply(null, attributes[i].values);
+                attributes[i].max = dataSetDescription.meta[i].max || Math.max.apply(null, attributes[i].values);
+            }
+            // implicitly defined attributes
+            else {
+                attributes[i].min = attributes[i].min || Math.min.apply(null, attributes[i].values);
+                attributes[i].max = attributes[i].max || Math.max.apply(null, attributes[i].values);
+            }
+        }
+    }
+
+    UpSetState.maxCardinality = attributes[attributes.length - 2].max;
+    if (isNaN(UpSetState.maxCardinality)) {
+        // fixme hack to make it work without attributes
+        UpSetState.maxCardinality = sets.length;
+    }
+    var maxCardSpinner = document.getElementById('maxCardinality');
+    maxCardSpinner.value = UpSetState.maxCardinality;
+    maxCardSpinner.max = UpSetState.maxCardinality;
+    var minCardSpinner = document.getElementById('minCardinality');
+    minCardSpinner.max = UpSetState.maxCardinality;
+
+    updateDatasetInformation(dataSetDescription)
+
+}
+
+
+// CRL - add JSON parsing option
+
+
+function parseJsonDataSet(data, dataSetDescription) {
+
+    console.log('parseJsonDataSet')
+    console.log('data=',data)
+
+    // the raw set arrays
+    var rawSets = [];
+    var setNames = [];
+
+    var file = data['data'];
+    var depth = 0
+
+    // the names of the sets are in the columns
+    var header = data['header'];
+
+
+    // initialize the rawSets variable to a set of empty arrays, one for each defined "set"
+    for (var setCount = 0; setCount < dataSetDescription['setlist'].length; ++setCount) {
+        rawSets.push(new Array());
+    }
+
+    // loop through each set defined in the 'setlist': then create an array in rawSets which has an array for each 
+    // set.   the values for each entry correspond to what values for this particular setname each entry in the dataset has
+
+    for (var setCount = 0; setCount < dataSetDescription['setlist'].length; setCount++) {
+        var col = dataSetDescription['setlist'][setCount]
+        for (var datarow=0; datarow < file.length; datarow++) {
+            rawSets[setCount].push(file[datarow][col])
+        }
+    }   
+
+
+    console.log('rawSets:',rawSets)
+
+/*
             // iterate over columns defined by this set definition block
             for (var r = 0; r < rows.length; r++) {
                 // increment number of items in data set
@@ -327,11 +574,17 @@ function parseDataSet(data, dataSetDescription) {
             }
 
             processedSetsCount += setDefinitionBlockLength;
-        }
-        else {
-            console.error('Set definition format "' + setDefinitionBlock.format + '" not supported');
-        }
+*/
+    // record how many items are in the dataset
+    for (var i=0;i<file.length;i++) {
+        allItems.push(depth++)
     }
+
+    // for each set definition, add its name to the variable collecting the names
+    for (var setCount = 0; setCount < dataSetDescription['setlist'].length; setCount++) {
+        setNames.push(dataSetDescription['setlist'][setCount])
+    }
+
 
     // initialize sets and set IDs
     var setPrefix = "S_";
@@ -403,6 +656,7 @@ function parseDataSet(data, dataSetDescription) {
     for (var i = 0; i < dataSetDescription.meta.length; ++i) {
         var metaDefinition = dataSetDescription.meta[i];
 
+        /*
         attributes[i].values = file.map(function (row, rowIndex) {
             var value = row[metaDefinition.index];
             switch (metaDefinition.type) {
@@ -429,6 +683,43 @@ function parseDataSet(data, dataSetDescription) {
             }
 
         });
+        */
+
+        // the original design used a map over the file, but we are using mongo attribute keywords
+        // since mongo may not return them in a specific order.  This loop visits every entry in the 
+        // dataset and appends a looked up value to the attributes array.  When this loop is finished, the 
+        // values of a particular attribute have been assigned to the attributes array.  Since this loop is inside, 
+        // a loop that examines the attributes one at a time, all values will be flushed out when the outer loop 
+        // is finished. 
+        
+        for (var row = 0; row < file.length; row++) {
+            var value = file[row][metaDefinition['name']]
+             switch (metaDefinition.type) {
+                case 'integer':
+                    var intValue = parseInt(value, 10);
+                    if (isNaN(intValue)) {
+                        console.error('Unable to convert "' + value + '" to integer.');
+                        attributes[i].values.push(NaN);
+                    } 
+                    attributes[i].values.push(intValue);
+                    break;
+                case 'float':
+                    var floatValue = parseFloat(value, 10);
+                    if (isNaN(floatValue)) {
+                        console.error('Unable to convert "' + value + '" to float.');
+                        attributes[i].values.push(NaN);
+                    }
+                    attributes[i].values.push(floatValue);
+                    break;
+                case 'id':
+                // fall-through
+                case 'string':
+                // fall-through
+                default:
+                   attributes[i].values.push(value)
+            }
+        }
+
     }
 
     var max
@@ -464,6 +755,9 @@ function parseDataSet(data, dataSetDescription) {
     updateDatasetInformation(dataSetDescription)
 
 }
+
+
+// update the UI elements to show the content of the currently loaded dataset.
 
 var updateDatasetInformation = function (dataSetDescription) {
 
