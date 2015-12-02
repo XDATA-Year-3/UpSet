@@ -531,7 +531,6 @@ function parseJsonDataSet(data, dataSetDescription) {
     var setNames = [];
 
     var file = data['data'];
-    var depth = 0
 
     // the names of the sets are in the columns
     var header = data['header'];
@@ -691,7 +690,7 @@ function parseJsonDataSet(data, dataSetDescription) {
         // values of a particular attribute have been assigned to the attributes array.  Since this loop is inside, 
         // a loop that examines the attributes one at a time, all values will be flushed out when the outer loop 
         // is finished. 
-        
+
         for (var row = 0; row < file.length; row++) {
             var value = file[row][metaDefinition['name']]
              switch (metaDefinition.type) {
@@ -699,7 +698,7 @@ function parseJsonDataSet(data, dataSetDescription) {
                     var intValue = parseInt(value, 10);
                     if (isNaN(intValue)) {
                         console.error('Unable to convert "' + value + '" to integer.');
-                        attributes[i].values.push(NaN);
+                        attributes[i].values.push(0);
                     } 
                     attributes[i].values.push(intValue);
                     break;
@@ -707,7 +706,7 @@ function parseJsonDataSet(data, dataSetDescription) {
                     var floatValue = parseFloat(value, 10);
                     if (isNaN(floatValue)) {
                         console.error('Unable to convert "' + value + '" to float.');
-                        attributes[i].values.push(NaN);
+                        attributes[i].values.push(0);
                     }
                     attributes[i].values.push(floatValue);
                     break;
