@@ -3,6 +3,7 @@
     "data/fruit/fruit.json",
     "http://localhost:8080/service/dataset-description-fruit",
     "http://localhost:8080/service/dataset-description-nano-one",
-    "http://localhost:8080/service/dataset-description-phoenix"
+    "http://localhost:8080/service/dataset-description-phoenix",
+    "http://localhost:8080/service/dataset-description-phoneitems"
 ]
 

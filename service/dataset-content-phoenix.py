@@ -32,21 +32,21 @@ def run(dbname,tablename):
     for x in table:
         # now add the binary sets.  In each case, the identify of a multi-valued field is tested and turned
         # into an additional binary set attribute
-        x['Country:Iran'] = 1 if (x['CountryCode']=='IRN') else 0
-        x['Country:Iraq'] = 1 if (x['CountryCode']=='IRQ') else 0
-        x['Country:Syria'] = 1 if (x['CountryCode']=='SYR') else 0
-        x['Country:Egypt'] = 1 if (x['CountryCode']=='EGY') else 0
-        x['Country:Afghanistan'] = 1 if (x['CountryCode']=='AFG') else 0 
-        x['Source:wn_world'] = 1 if (x['NewsSources']=='wn_world') else 0 
-        x['Source:wn_politics'] = 1 if (x['NewsSources']=='wn_politics') else 0
-        x['Source:wn_africa'] = 1 if (x['NewsSources']=='wn_africa') else 0
-        x['Source:wn_mideast'] = 1 if (x['NewsSources']=='wn_mideast') else 0 
-        x['Source:malstar_world'] = 1 if (x['NewsSources']=='malstar_world') else 0
-        x['Source:egypt_dailynews'] = 1 if (x['NewsSources']=='egypt_dailynews') else 0
-        x['Source:manafn_iraq'] = 1 if (x['NewsSources']=='manafn_iraq') else 0
-        x['Source:menafn_syria'] = 1 if (x['NewsSources']=='menafn_syria') else 0
-        x['Source:menafn_saudi'] = 1 if (x['NewsSources']=='menafn_saudi') else 0
-        x['Source:aljazeera'] = 1 if (x['NewsSources']=='aljazeera') else 0
+        x['Iran'] = 1 if (x['CountryCode']=='IRN') else 0
+        x['Iraq'] = 1 if (x['CountryCode']=='IRQ') else 0
+        x['Syria'] = 1 if (x['CountryCode']=='SYR') else 0
+        x['Egypt'] = 1 if (x['CountryCode']=='EGY') else 0
+        x['Afghanistan'] = 1 if (x['CountryCode']=='AFG') else 0 
+        x['wn_world'] = 1 if (x['NewsSources']=='wn_world') else 0 
+        x['wn_politics'] = 1 if (x['NewsSources']=='wn_politics') else 0
+        x['wn_africa'] = 1 if (x['NewsSources']=='wn_africa') else 0
+        x['wn_mideast'] = 1 if (x['NewsSources']=='wn_mideast') else 0 
+        x['malstar_world'] = 1 if (x['NewsSources']=='malstar_world') else 0
+        x['egypt_dailynews'] = 1 if (x['NewsSources']=='egypt_dailynews') else 0
+        x['manafn_iraq'] = 1 if (x['NewsSources']=='manafn_iraq') else 0
+        x['menafn_syria'] = 1 if (x['NewsSources']=='menafn_syria') else 0
+        x['menafn_saudi'] = 1 if (x['NewsSources']=='menafn_saudi') else 0
+        x['aljazeera'] = 1 if (x['NewsSources']=='aljazeera') else 0
         x['Neutral'] = 1 if (x['QuadClass']==0) else 0
         x['VerbalCooperation'] = 1 if (x['QuadClass']==1) else 0
         x['MaterialCooperation'] = 1 if (x['QuadClass']==2) else 0

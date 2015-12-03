@@ -12,7 +12,7 @@ def run():
     response = {}
     response['datasource'] = 'remote'
     response['file'] = "http://localhost:8080/service/dataset-content-phoenix/ist-qcr/phoenix"
-    response['name'] = "Phoenix Newsfeed Sets Analysis Prototype"
+    response['name'] = "Phone Items"
     response['separator'] = ','
     response['skip'] = 0
     response['meta'] = [ 
@@ -30,9 +30,9 @@ def run():
     response['sets'] = [
         { "format": "binary", "start": 1, "end": 5}]
     response['setlist'] = ['Neutral','VerbalCooperation','MaterialCooperation','VerbalConflict','MaterialConflict',
-                'Country:Iran','Country:Iraq','Country:Eqypt','Country:Syria','Country:Afghanistan',
-                'Source:wn_world','Source:wn_politics','Source:wn_africa','Source:wn_mideast','Source:malstar_world',
-                'Source:egypt_dailynews', 'Source:manafn_iraq', 'Source:menafn_syria','Source:menafn_saudi','Source:aljazeera'
+                'Iran','Iraq','Eqypt','Syria','Afghanistan',
+                'wn_world','wn_politics','wn_africa','wn_mideast','malstar_world',
+                'egypt_dailynews', 'manafn_iraq', 'menafn_syria','menafn_saudi','aljazeera'
                 ]
     response['attributelist'] = []
     response['author'] = 'KnowledgeVis, LLC'
