@@ -12,7 +12,7 @@ def run():
     response = {}
     response['datasource'] = 'remote'
     response['file'] = "http://localhost:8080/service/dataset-content-phoenix/ist-qcr/phoenix"
-    response['name'] = "Phone Items"
+    response['name'] = "Phoenix Event QCR mongoDB feed"
     response['separator'] = ','
     response['skip'] = 0
     response['meta'] = [ 
