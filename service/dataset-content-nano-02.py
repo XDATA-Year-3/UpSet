@@ -86,6 +86,11 @@ def run(dbname,tablename):
         x['Purity99+'] = 1 if ('Purity Of' in x and x['Purity Of']>=99) else 0
         x['UltraPure'] = 1 if 'Purity Of' in x and ((x['Purity Of'] == 'Ultrapure') or (x['Purity Of']=='Ultra Pure')) else 0
 
+        # input database has false/true instead of 0/1 needed for UpSet
+        x['IsCrystalline'] = 1 if (x['IsCrystalline']) else 0
+        x['Polycrystalline'] = 1 if (x['Polycrystalline']) else 0
+        x['SingleCrystal'] = 1 if (x['SingleCrystal']) else 0        
+        x['Monoclinic'] = 1 if (x['Monoclinic']) else 0  
         
 
         # return cleaned tuple
