@@ -11,8 +11,8 @@ def run():
     # Create an empty response object.
     response = {}
     response['datasource'] = 'remote'
-    response['file'] = "http://localhost:8080/service/dataset-content-nano-02/NanoDB2/Nano_combined_0122_upset"
-    response['name'] = "Nano Database Dashboard v0.8.2"
+    response['file'] = "http://localhost:8080/service/dataset-content-nano-090/NanoDB3/Nano_combined_0225"
+    response['name'] = "Nano Database Dashboard v0.9.0"
     response['separator'] = ','
     response['skip'] = 0
     response['meta'] = [ 
@@ -34,7 +34,8 @@ def run():
         { "format": "binary", "start": 1, "end": 5}]
     response['setlist'] = ['2D Dimensionality','3D Dimensionality','Metal','Metal Oxide','Polymer','Carbohydrate',
     'Protein','Nucleic Acid','Group Ii-Vi','Dendrimer','Lipid','Group Iv - Non C',
-    'Agglomerated','Aggregated','Positive Polarity','Negative Polarity','Purity99+','IsCrystalline']
+    'Agglomerated','Aggregated','Positive Polarity','Negative Polarity','Purity99+','IsCrystalline',
+    'Aromatic','Macrocyclic','Sugar','VHQ-R subset', 'UHQ-R subset','source_pdf','source_nano_db']
     #'Monoclinic','SingleCrystal','Polycrystalline','Amorphous','Anatase','Tetragonal','Rutile','Cubic','Brookite','Wurtzite','Zincite']
     response['attributelist'] = []
     response['author'] = 'ABCC IVG & KnowledgeVis'
