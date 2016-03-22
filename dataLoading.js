@@ -21,7 +21,8 @@ function initData(ctx, callback) {
             loadDataSetDescriptions(data);
         },
         function (data, textStatus, jqXHR) {
-            console.error('Error loading "' + this.url + '".');
+            //console.error('Error loading "' + this.url + '".');
+            
         });
 
     /// registering custom dataset function
@@ -407,7 +408,7 @@ function parseDataSet(data, dataSetDescription) {
         min: 0
     };
 
-
+       
 
     // rawSets contains an Array of elements for each "set" defined in this data.  For example, for 
     // Simpsons, 6 sets ('Blue Hair','school', etc...).  For each set, an array of all elements is created
@@ -416,7 +417,10 @@ function parseDataSet(data, dataSetDescription) {
     for (var d = 0; d < depth; ++d) {
         var setCount = 0;
         for (var s = 0; s < rawSets.length; s++) {
-            setCount += rawSets[s][d];
+            // added gate to stop dirty (non 0 or 1) data from corrupting the set total
+            if ( (typeof rawSets[s][d]) ==='number') {
+                setCount += rawSets[s][d];
+            }
         }
         setCountAttribute.values[d] = setCount;
     }
@@ -626,7 +630,10 @@ function parseJsonDataSet(data, dataSetDescription) {
     for (var d = 0; d < depth; ++d) {
         var setCount = 0;
         for (var s = 0; s < rawSets.length; s++) {
-            setCount += rawSets[s][d];
+            // added gate to stop dirty (non 0 or 1) data from corrupting the set total
+            if ( (typeof rawSets[s][d]) ==='number') {            
+                setCount += rawSets[s][d];
+            }
         }
         setCountAttribute.values[d] = setCount;
     }
@@ -706,6 +713,10 @@ function parseJsonDataSet(data, dataSetDescription) {
                     var floatValue = parseFloat(value, 10);
                     if (isNaN(floatValue)) {
                         console.error('Unable to convert "' + value + '" to float.');
+                        // in Nano Database this was encountered. replace with a flag value (-1)
+                        if (value == 'Graphically Represented') {
+                            value = -1
+                        }
                         attributes[i].values.push(0);
                     }
                     attributes[i].values.push(floatValue);

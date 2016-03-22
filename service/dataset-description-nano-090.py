@@ -7,11 +7,11 @@ import string
 import tangelo
 
 
-def run():
+def run(ipaddress):
     # Create an empty response object.
     response = {}
     response['datasource'] = 'remote'
-    response['file'] = "http://0.0.0.0:8080/service/dataset-content-nano-090/NanoDB3/Nano_combined_0301"
+    response['file'] = "http://"+str(ipaddress)+":8080/service/dataset-content-nano-090/NanoDB3/Nano_combined_0301"
     response['name'] = "Nano Database Dashboard v0.9.0"
     response['separator'] = ','
     response['skip'] = 0
@@ -19,6 +19,7 @@ def run():
         { "type": "id", "name": "NanomaterialID" },
         { "type": "string", "name": "Molecular Identity" },
         { "type": "string", "name": "Material Type" },  
+        { "type": "string", "name": "Molecular Type" },       
         {"type":"string","name":"Product Name"},             
 #        {'name':'Mean Hydrodynamic Diameter','type':'float'}, 
        {'name':'Mean Primary Particle Size','type':'float'},         

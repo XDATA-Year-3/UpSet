@@ -1,9 +1,6 @@
 [
-    "data/simpsons/simpsons.json",
-    "data/fruit/fruit.json",
-    "http://localhost:8080/service/dataset-description-fruit",
-    "http://localhost:8080/service/dataset-description-nano-090",
-    "http://localhost:8080/service/dataset-description-nano-02",
-    "http://localhost:8080/service/dataset-description-nano-one"
+    "http://0.0.0.0:8080/service/dataset-description-nano-090/0.0.0.0",
+    "http://0.0.0.0:8080/service/dataset-description-nano-090/0.0.0.0",
+    "http://0.0.0.0:8080/service/dataset-description-nano-090/0.0.0.0",
+    "http://0.0.0.0:8080/service/dataset-description-nano-090/0.0.0.0"
 ]
-

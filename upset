@@ -24,7 +24,7 @@ port=$2
 if [ -z "${hostname}" ]; then
     # If both are missing, they both receive the default values.
     port=8080
-    hostname=localhost
+    hostname=0.0.0.0
 elif [ -z "${port}" ]; then
     # If the "port" argument is missing, then assume the "hostname" argument is
     # actually the port.
@@ -38,4 +38,4 @@ here=`readlink -f $0`
 here=`dirname "${here}"`
 
 # Launch the application
-"${TANGELO}" --root "${here}" --host ${hostname} --port ${port}  --config "${here}/tangelo-config.yaml"
+"${TANGELO}" --root "${here}" --group tangelo --user tangelo --host ${hostname} --port ${port}  --config "${here}/tangelo-config.yaml"

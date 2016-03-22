@@ -55,7 +55,7 @@ def run(dbname,tablename):
     dataset_collection = db[tablename]
 
     # build query for . 
-    query = {'curtis':'is great'}
+    query = {}
     table = dataset_collection.find(query,{'_id':0})
 
     # copy but ignore sub-dictionaries
@@ -99,6 +99,8 @@ def run(dbname,tablename):
 
         # many of the attributes we test for are not in all the particles, so fill in the table here using conditional expressions.  The value
         # is passed through if it exists, otherwise it is not. 
+
+        x['NanomaterialID'] = x['NanomaterialID'] if 'NanomaterialID' in x else ''
 
         x['Mean Hydrodynamic Diameter'] = x['Mean Hydrodynamic Diameter'] if 'Mean Hydrodynamic Diameter' in x else 0
         x['Molecular Type'] = x['Molecular Type'] if 'Molecular Type' in x else ''
@@ -162,11 +164,13 @@ def run(dbname,tablename):
         x['VHQ-R subset'] = 1 if ('VHQ-R subset' in x and x['VHQ-R subset']=='yes') else 0
         x['source_pdf'] = 1 if  x['dashboard_data_source'] == 'pdf_extraction' else 0 
         x['source_nano_db'] = 1 if x['dashboard_data_source'] == 'nano_database' else 0  
+
+ 
       
         # return cleaned tuple
         response['data'].append(x)
 
-    table.rewind()
+    #table.rewind()
 
     # find the column headers
    # for col in x:
@@ -179,28 +183,34 @@ def run(dbname,tablename):
     #-------------------------------------------------------------------------
 
     # open a connection and copy the entire database
-    dataset_collection = db['pdf_output_processed']
+    #dataset_collection = db['pdf_output_processed']
     dataset_collection = db['savedata']
 
     # build query for Phoenix. focus returns on middle east countries
     query = {};
     table = dataset_collection.find(query,{'_id':0})
+    #print 'pdf-table:',table[0]
+
 
     # copy out of the mongodb cursor type to a python list
-    x = {}
     pdfcount = 0
     for jsonlist in table[0]['data']:
+        x = {}
 
         # copy to avoid unicode problems.  Create new dictionary
 
         for field_dict in jsonlist:
             #print field_dict
-            keyname = field_dict.keys()[0]
-            value = ConditionValue(field_dict[keyname])
-            #x[keyname] = field_dict[keyname]
-            x[keyname] = value
+            try:
+                keyname = str(field_dict.keys()[0])
+                value = ConditionValue(field_dict[keyname])
+                x[keyname] = value
+            except:
+                pass
 
-        # print x
+        #print 'pdf-dict:',x
+        #sys.stdout.flush()
+
         # pdfcount += 1
         # if pdfcount > 2:
         #     break;
@@ -219,18 +229,26 @@ def run(dbname,tablename):
         x['source_nano_db'] =  0  
          
 
+        # find mappings to fields in nanomaterial registry entries
+        x['Material Type'] = x['Macromolecule Type'] if 'Macromolecule Type' in x else ''
+        x['Molecular Type'] = x['Macromolecule'] if 'Macromolecule' in x else ''
+        x['Molecular Identity'] = x['Name'] if 'Name' in x else ''
+        x['NanomaterialID'] = x['PDB ID'] if 'PDB ID' in x else ''
+        try:
+            x['Mean Primary Particle Size'] = float(x['R']) if 'R' in x else 0
+        except: 
+            x['Mean Primary Particle Size'] = x['R'] if 'R' in x else 0
+
         # add the empty columns so the table is always consistent
-        x['Mean Hydrodynamic Diameter'] = x['Mean Hydrodynamic Diameter'] if 'Mean Hydrodynamic Diameter' in x else 0
-        x['Molecular Type'] = x['Molecular Type'] if 'Molecular Type' in x else ''
-        x['Material Type'] = x['Material Type'] if 'Material Type' in x else ''
         x['Product Name'] = x['Product Name'] if 'Product Name' in x else ''
+        x['Material Type'] = x['Material Type'] if 'Material Type' in x else ''
         x['Mean Hydrodynamic Diameter'] = x['Mean Hydrodynamic Diameter'] if 'Mean Hydrodynamic Diameter' in x else 0
-        x['Mean Primary Particle Size'] = x['Mean Primary Particle Size'] if 'Mean Primary Particle Size' in x else 0
+        x['Primary Particle Size'] = x['Primary Particle Size'] if 'Primary Particle Size' in x else 0
         x['Component Molecular Weight'] = x['Component Molecular Weight'] if 'Component Molecular Weight' in x else 0
         x['Molecular Weight'] = x['Molecular Weight'] if 'Molecular Weight' in x else 0
         x['Lambda Max'] = x['Lambda Max'] if 'Lambda Max' in x else 0
         x['Bulk Density'] = x['Bulk Density'] if 'Bulk Density' in x else 0
-        x['Primary Particle Size'] = x['Primary Particle Size'] if 'Primary Particle Size' in x else 0
+
         x['Specific Surface Area'] = x['Specific Surface Area'] if 'Specific Surface Area' in x else 0
         x['Zeta Potential'] = x['Zeta Potential'] if 'Zeta Potential' in x else 0
 
@@ -261,8 +279,6 @@ def run(dbname,tablename):
         x['Aggreg-Agglom'] = 1  if 'State' in x and ( x['State'] =='Aggregated/Agglomerated' ) else 0
         x['Not Aggreg-Agglom'] = 1  if 'State' in x and ( x['State'] =='Not Aggregated/Agglomerated' ) else 0
 
-        # special cleaning for Molecular Identity - usually a string, but at least one number value exists
-        x['Molecular Identity'] = str(x['Molecular Identity']) if 'Molecular Identity' in x  else ''
 
         # special cleaning for 'Purity Of' because it has numeric and character and inconsistent values
         x['Purity99+'] = 1 if ('Purity Of' in x and x['Purity Of']>=99) else 0
@@ -280,6 +296,8 @@ def run(dbname,tablename):
         response['data'].append(x)
 
     table.rewind()
+
+    print 'done with pdf extraction data'
 
     # find the column headers; only add the new columns to the header record, don't repeat the others
     for col in table[0]:
